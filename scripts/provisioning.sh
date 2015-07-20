@@ -139,6 +139,14 @@ if [ ! zpool_created ]; then
         try zfs set atime=off tank
     next
 
+    zpool_created=$(zpool status | grep tank | grep ONLINE)
+
+    if [ ! zpool_created ]; then
+        echo_failure "Unable to create zpool; aborting provisioning process"
+    fi
+fi
+
+if [ ! -d "/tank/main" ]; then
     step "Move postgresql directory to /tank: "
         try service postgresql stop
         try cp -r /var/lib/postgresql/9.4/main /tank
