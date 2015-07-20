@@ -9,17 +9,11 @@ provision_ts=$(date +"%s")
 zpool_name="tank"
 
 echo_failure() {
-  # echo first argument in red
-  printf "\e[31m ✘ ${1}"
-  # reset colours back to normal
-  echo -e "\e[0m"
+  printf "\e[31m ✘ ${1} \e[0m"
 }
 
 echo_success() {
-  # echo first argument in green
-  printf "\e[32m ✔ ${1}"
-  # reset colours back to normal
-  echo -e "\e[0m"
+  printf "\e[32m ✔ ${1} \e[0m"
 }
 
 # Use step(), try(), and next() to perform a series of commands and print
@@ -81,17 +75,34 @@ command_exists () {
     type "$1" &> /dev/null ;
 }
 
+pg_extension_exists () {
+    if [ -f "/usr/lib/postgresql/9.4/lib/$1.so" ]; then
+        return 0
+    fi
+
+    if [ -f "/usr/share/postgresql/9.4/extension/$1.control" ]; then
+        return 0
+    fi
+
+    return 1
+}
+
 pgxn_install () {
     local file=$1
     local file=${2:-$file}
 
-    if [ ! -e "/usr/lib/postgresql/9.4/lib/$file.so" ] && [ ! -e "/usr/share/postgresql/9.4/extension/$file.control" ]; then
+    export USE_PGXS=1
+
+    if ! pg_extension_exists ${file}
+    then
+        echo "$file... installing"
         if [ -z "$3" ]; then
-                pgxn install --yes $1
-            else
-                pgxn install --yes --$3 $1
-            fi
+            pgxn install --yes $1
+        else
+            pgxn install --yes --$3 $1
+        fi
     else
+        echo "$file... already installed"
         return 0
     fi
 }
@@ -125,11 +136,11 @@ then
     next
 fi
 
-if ! is_installed "postgresql-plperl-9.4"
+if ! is_installed "libhiredis-dev"
 then
     step "Installing PostgreSQL: "
         try wget -O - https://gist.githubusercontent.com/jmealo/0f1e2c9c4befe2b9eeb2/raw/1389e9d3e7327ef0a1cd26c9d1f4d479dfed18a3/apt.postgresql.org.sh | bash
-        try apt-get install -y postgresql postgresql-contrib libpq-dev postgresql-server-dev-9.4 postgresql-plperl-9.4
+        try apt-get install -y postgresql postgresql-contrib libpq-dev postgresql-server-dev-9.4 postgresql-plperl-9.4 libhiredis-dev
     next
 fi
 
@@ -161,13 +172,13 @@ then
     fi
 fi
 
-if [ ! -d "/$zpool_name/main" ]; then
+if [ ! -d "/$zpool_name/postgresql" ]; then
     step "Move postgresql directory to /$zpool_name: "
         try service postgresql stop
         try cp /etc/postgresql/9.4/main/postgresql.conf "/etc/postgresql/9.4/main/postgresql.$provision_ts.conf"
         try cp -r /var/lib/postgresql "/$zpool_name"
         try chown -R postgres:postgres "/$zpool_name"
-        try wget https://gist.githubusercontent.com/jmealo/3baa5990825a581b3007/raw/83d9b8611601304082e41ea15f369b1699df6412/postgresql.conf -O /etc/postgresql/9.4/main/postgresql.conf
+        try wget https://gist.githubusercontent.com/jmealo/3baa5990825a581b3007/raw/5ad9d120fc214eb038b3bf8e9b6da44e05f53efd/postgresql.conf -O /etc/postgresql/9.4/main/postgresql.conf
         try service postgresql start
     next
 fi
@@ -201,19 +212,39 @@ step "Installing postgresql extensions using PGXN: "
     try pgxn_install "trimmed_aggregates"
     try pgxn_install "weighted_mean"
     try pgxn_install "jsonbx"
+    try pgxn_install "plv8"
     try pgxn_install "pg_partman" "pg_partman_bgw"
     try pgxn_install "cyanaudit" "cyanaudit" "testing"
     try pgxn_install "temporal_tables" "temporal_tables" "testing"
 next
 
-# TODO: redis-fdw didn't compile even with libhiredis-dev installed (https://gist.github.com/jmealo/a9271c47a08f783cb9bc)
+if ! pg_extension_exists "redis_fdw"
+then
+    step "Installing redis-fdw manually because the PGXN version doesn't install: "
+        try mkdir "$provision_ts"
+        try cd "$provision_ts"
+        try wget --quiet https://github.com/pg-redis-fdw/redis_fdw/archive/REL9_4_STABLE.zip
+        try wget --quiet https://github.com/redis/hiredis/archive/master.zip
+        try unzip REL9_4_STABLE.zip
+        try unzip master.zip
+        try mv hiredis-master redis_fdw-REL9_4_STABLE/hiredis
+        try cd redis_fdw-REL9_4_STABLE
+        try make
+        try make install
+        try cd ../..
+        try rm -rf "$provision_ts"
+    next
+fi
 
 step "Creating template database with proper encoding: "
     try su postgres -c "psql -c \"UPDATE pg_database SET datistemplate = FALSE WHERE datname = 'template1';\""
     try su postgres -c "psql -c \"DROP DATABASE template1;\""
     try su postgres -c "psql -c \"CREATE DATABASE  template1 with ENCODING = 'UTF-8' LC_CTYPE = 'en_US.utf8' LC_COLLATE = 'en_US.utf8' template = template0;\""
     try su postgres -c "psql -c \"UPDATE pg_database SET datistemplate = TRUE WHERE datname = 'template1';\""
-    try su postgres -c "psql -f create-extensions.sql"
+next
+
+step "Creating extensions in PostgreSQL: "
+    try su postgres -c "psql -f /vagrant/scripts/create-extensions.sql"
 next
 
 echo
