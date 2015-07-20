@@ -126,7 +126,7 @@ then
     next
 
     step "Installing ubuntu-zfs (this takes a while to compile): "
-        try apt-get install ubuntu-zfs
+        try apt-get install -y ubuntu-zfs
     next
 fi
 
@@ -138,10 +138,7 @@ if [ ! zpool_created ]; then
         try zfs set compression=lz4 tank
         try zfs set atime=off tank
     next
-fi
 
-if [ ! -d "/tank" ]; then
-# TODO: we should run initdb and specify the output directory instead of moving it
     step "Move postgresql directory to /tank: "
         try service postgresql stop
         try cp -r /var/lib/postgresql/9.4/main /tank
