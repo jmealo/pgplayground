@@ -5,6 +5,9 @@ if [[ whoami -ne "root" ]]; then
     exit 1
 fi
 
+provision_ts=$(date +"%s")
+zpool_name="tank"
+
 echo_failure() {
   # echo first argument in red
   printf "\e[31m ✘ ${1}"
@@ -93,6 +96,18 @@ pgxn_install () {
     fi
 }
 
+is_mounted () {
+	local FS=$(zfs get -H mounted "${@}")
+
+	FS_REGEX="^${@}\s+mounted\s+yes\s+-"
+
+	if [[ $FS =~ $FS_REGEX ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
 locale_set=$(locale | grep en_US.UTF-8)
 
 if [ ! locale_set ]; then
@@ -130,27 +145,29 @@ then
     next
 fi
 
-zpool_created=$(zpool status | grep tank | grep ONLINE)
-
-if [ ! zpool_created ]; then
-    step "Creating tank zpool: "
-        try zpool create -f tank mirror sdb sdc mirror sdd sde
-        try zfs set compression=lz4 tank
-        try zfs set atime=off tank
+if ! is_mounted "$zpool_name"
+then
+    step "Creating $zpool_name zpool: "
+        try zpool create -f $zpool_name mirror sdb sdc mirror sdd sde
+        try zfs set compression=lz4 $zpool_name
+        try zfs set atime=off $zpool_name
+        try zfs set checksum=fletcher4 $zpool_name
     next
 
-    zpool_created=$(zpool status | grep tank | grep ONLINE)
+    zpool_created=$(zpool status | grep "$zpool_name" | grep ONLINE)
 
     if [ ! zpool_created ]; then
         echo_failure "Unable to create zpool; aborting provisioning process"
     fi
 fi
 
-if [ ! -d "/tank/main" ]; then
-    step "Move postgresql directory to /tank: "
+if [ ! -d "/$zpool_name/main" ]; then
+    step "Move postgresql directory to /$zpool_name: "
         try service postgresql stop
-        try cp -r /var/lib/postgresql/9.4/main /tank
-        try ln -s /tank /var/lib/postgresql/9.4/main
+        try cp /etc/postgresql/9.4/main/postgresql.conf "/etc/postgresql/9.4/main/postgresql.$provision_ts.conf"
+        try cp -r /var/lib/postgresql "/$zpool_name"
+        try chown -R postgres:postgres "/$zpool_name"
+        try wget https://gist.githubusercontent.com/jmealo/3baa5990825a581b3007/raw/83d9b8611601304082e41ea15f369b1699df6412/postgresql.conf -O /etc/postgresql/9.4/main/postgresql.conf
         try service postgresql start
     next
 fi
