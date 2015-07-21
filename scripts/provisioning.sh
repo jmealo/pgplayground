@@ -247,6 +247,16 @@ step "Creating extensions in PostgreSQL: "
     try su postgres -c "psql -f /vagrant/scripts/create-extensions.sql"
 next
 
+if ! command_exists "pgloader"
+then
+    step "Installing pgloader"
+        try apt-get install -y sbcl unzip libsqlite3-dev make curl gawk freetds-dev libzip-dev
+        try wget http://pgloader.io/files/pgloader_3.2.0+dfsg-1_amd64.deb
+        try dpkg -i pgloader_3.2.0+dfsg-1_amd64.deb
+        try rm pgloader_3.2.0+dfsg-1_amd64.deb
+    next
+fi
+
 echo
 echo "Provisioning complete"
 echo
