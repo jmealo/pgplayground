@@ -184,6 +184,8 @@ then
             try cp -r /var/lib/postgresql "/$zpool_name"
             try chown -R postgres:postgres "/$zpool_name"
             try wget https://gist.githubusercontent.com/jmealo/3baa5990825a581b3007/raw/5ad9d120fc214eb038b3bf8e9b6da44e05f53efd/postgresql.conf -O /etc/postgresql/9.4/main/postgresql.conf
+            try cp /etc/postgresql/9.4/main/pg_hba.conf "/etc/postgresql/9.4/main/pg_hba.conf"
+            try wget https://gist.githubusercontent.com/jmealo/318ac0865382bd0f2cdc/raw/4d133a1118395d871abb20f5ef4bd5c5b9530f6f/pg_hba.conf -O /etc/postgresql/9.4/main/pg_hba.conf
             try service postgresql start
         next
     fi
@@ -199,7 +201,9 @@ else
     step "Optimizing PostgreSQL configuration"
         try service stop postgresql
         try cp /etc/postgresql/9.4/main/postgresql.conf "/etc/postgresql/9.4/main/postgresql.$provision_ts.conf"
-        wget https://gist.githubusercontent.com/jmealo/7eaa4a8c800f1907e683/raw/1d5477078222755683ae6e88cd4df72ea1a80af0/postgresql.conf -O /etc/postgresql/9.4/main/postgresql.conf
+        try wget https://gist.githubusercontent.com/jmealo/7eaa4a8c800f1907e683/raw/1d5477078222755683ae6e88cd4df72ea1a80af0/postgresql.conf -O /etc/postgresql/9.4/main/postgresql.conf
+        try cp /etc/postgresql/9.4/main/pg_hba.conf "/etc/postgresql/9.4/main/pg_hba.conf"
+        try wget https://gist.githubusercontent.com/jmealo/318ac0865382bd0f2cdc/raw/4d133a1118395d871abb20f5ef4bd5c5b9530f6f/pg_hba.conf -O /etc/postgresql/9.4/main/pg_hba.conf
         try service postgresql start
     next
 fi
