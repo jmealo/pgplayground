@@ -146,49 +146,61 @@ then
     next
 fi
 
-if ! is_installed "ubuntu-zfs"
+if -b "/dev/sdb" && -b "/dev/sdc" && -b "/dev/sdd" && -b "/dev/sde"
 then
-    step "Adding ZFS Repo: "
-        try add-apt-repository -y ppa:zfs-native/stable
-        try apt-get update
-    next
 
-    step "Installing ubuntu-zfs (this takes a while to compile): "
-        try apt-get install -y ubuntu-zfs
-    next
-fi
+    if ! is_installed "ubuntu-zfs"
+    then
+        step "Adding ZFS Repo: "
+            try add-apt-repository -y ppa:zfs-native/stable
+            try apt-get update
+        next
 
-if ! is_mounted "$zpool_name"
-then
-    step "Creating $zpool_name zpool: "
-        try zpool create -f $zpool_name mirror sdb sdc mirror sdd sde
-        try zfs set compression=lz4 $zpool_name
-        try zfs set atime=off $zpool_name
-        try zfs set checksum=fletcher4 $zpool_name
-    next
-
-    zpool_created=$(zpool status | grep "$zpool_name" | grep ONLINE)
-
-    if [ ! zpool_created ]; then
-        echo_failure "Unable to create zpool; aborting provisioning process"
+        step "Installing ubuntu-zfs (this takes a while to compile): "
+            try apt-get install -y ubuntu-zfs
+        next
     fi
-fi
 
-if [ ! -d "/$zpool_name/postgresql" ]; then
-    step "Move postgresql directory to /$zpool_name: "
-        try service postgresql stop
+    if ! is_mounted "$zpool_name"
+    then
+        step "Creating $zpool_name zpool: "
+            try zpool create -f $zpool_name mirror sdb sdc mirror sdd sde
+            try zfs set compression=lz4 $zpool_name
+            try zfs set atime=off $zpool_name
+            try zfs set checksum=fletcher4 $zpool_name
+        next
+
+        zpool_created=$(zpool status | grep "$zpool_name" | grep ONLINE)
+
+        if [ ! zpool_created ]; then
+            echo_failure "Unable to create zpool; aborting provisioning process"
+        fi
+    fi
+
+    if [ ! -d "/$zpool_name/postgresql" ]; then
+        step "Move postgresql directory to /$zpool_name: "
+            try service postgresql stop
+            try cp /etc/postgresql/9.4/main/postgresql.conf "/etc/postgresql/9.4/main/postgresql.$provision_ts.conf"
+            try cp -r /var/lib/postgresql "/$zpool_name"
+            try chown -R postgres:postgres "/$zpool_name"
+            try wget https://gist.githubusercontent.com/jmealo/3baa5990825a581b3007/raw/5ad9d120fc214eb038b3bf8e9b6da44e05f53efd/postgresql.conf -O /etc/postgresql/9.4/main/postgresql.conf
+            try service postgresql start
+        next
+    fi
+
+    if [ ! -e "/usr/local/bin/arc_summary.py" ]; then
+        step "Installing arc_summary script: "
+            try wget https://raw.githubusercontent.com/tiberiusteng/tools/master/arc_summary.py -O /usr/local/bin/arc_summary.py
+            try chmod +x /usr/local/bin/arc_summary.py
+        next
+    fi
+else
+    # TODO: check if we've already written the configuration file so we don't overwrite changes
+    step "Optimizing PostgreSQL configuration"
+        try service stop postgresql
         try cp /etc/postgresql/9.4/main/postgresql.conf "/etc/postgresql/9.4/main/postgresql.$provision_ts.conf"
-        try cp -r /var/lib/postgresql "/$zpool_name"
-        try chown -R postgres:postgres "/$zpool_name"
-        try wget https://gist.githubusercontent.com/jmealo/3baa5990825a581b3007/raw/5ad9d120fc214eb038b3bf8e9b6da44e05f53efd/postgresql.conf -O /etc/postgresql/9.4/main/postgresql.conf
+        wget https://gist.githubusercontent.com/jmealo/7eaa4a8c800f1907e683/raw/1d5477078222755683ae6e88cd4df72ea1a80af0/postgresql.conf -O /etc/postgresql/9.4/main/postgresql.conf
         try service postgresql start
-    next
-fi
-
-if [ ! -e "/usr/local/bin/arc_summary.py" ]; then
-    step "Installing arc_summary script: "
-        try wget https://raw.githubusercontent.com/tiberiusteng/tools/master/arc_summary.py -O /usr/local/bin/arc_summary.py
-        try chmod +x /usr/local/bin/arc_summary.py
     next
 fi
 
