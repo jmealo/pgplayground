@@ -250,6 +250,12 @@ then
     next
 fi
 
+step "Creating temporary directory for postgrest user"
+    try mkdir -p "/tmp/postgres.$provision_ts"
+    try chown -R postgres:postgres "/tmp/postgres.$provision_ts"
+    try cd "/tmp/postgres.$provision_ts"
+next
+
 step "Creating template database with proper encoding: "
     try su postgres -c "psql -c \"UPDATE pg_database SET datistemplate = FALSE WHERE datname = 'template1';\""
     try su postgres -c "psql -c \"DROP DATABASE template1;\""
@@ -258,8 +264,17 @@ step "Creating template database with proper encoding: "
 next
 
 step "Creating extensions in PostgreSQL: "
-    try su postgres -c "psql -f /vagrant/scripts/create-extensions.sql"
+    try wget https://gist.githubusercontent.com/jmealo/932470d47ae540399979/raw/bb4966eee3375e7ed993e729b76190694769c0bb/create-extensions.sql
+    try su postgres -c "psql -f create-extensions.sql"
 next
+
+if sudo -u postgres psql -l | grep '^ spark\b' > /dev/null ; then
+    #TODO: this check doesn't work fix it
+    step "Creating spark user and database in PostgreSQL"
+        try sudo -u postgres psql -c "CREATE USER spark REPLICATION LOGIN ENCRYPTED PASSWORD 'SparkPoint2015';"
+        try sudo -u postgres createdb spark -o spark
+    next
+fi
 
 if ! command_exists "pgloader"
 then
@@ -270,6 +285,33 @@ then
         try rm pgloader_3.2.0+dfsg-1_amd64.deb
     next
 fi
+
+if ! command_exists "postgrest"
+then
+    step "Installing postgrest"
+        try wget https://github.com/begriffs/postgrest/releases/download/v0.2.10.0/postgrest-0.2.10.0-linux.tar.xz
+        try tar -xJf postgrest-0.2.10.0-linux.tar.xz -C /usr/local/bin
+        try ln -s /usr/local/bin/postgrest-0.2.10.0 /usr/local/bin/postgrest
+        try chmod +x /usr/local/bin/postgrest-0.2.10.0
+        try useradd -r -s /bin/false postgrest
+        try wget https://raw.githubusercontent.com/begriffs/postgrest/master/debian/postgrest.init.d -O /etc/init.d/postgrest
+        try chmod +x /etc/init.d/postgrest
+        try mkdir -p /var/log/postgrest
+        try touch /var/log/postgrest/postgrest.log
+        try chown -R postgrest:postgrest /var/log/postgrest
+        try mkdir -p /etc/defaults/
+        try wget https://gist.githubusercontent.com/jmealo/1cc35550ac015f9e503f/raw/62e9d29fabd6201df8cfe6346771db81cd947026/postgrest -O /etc/default/postgrest
+        try wget https://raw.githubusercontent.com/begriffs/postgrest/master/debian/postgrest-wrapper -O /usr/local/bin/postgrest-wrapper
+        try chmod +x /usr/local/bin/postgrest-wrapper
+        try update-rc.d postgrest defaults
+        try rm postgrest-0.2.10.0-linux.tar.xz
+        try service postgrest start
+    next
+fi
+
+step "Cleaning up temporary directory for postgrest user"
+    try rm -rf "/tmp/postgres.$provision_ts"
+next
 
 echo
 echo "Provisioning complete"
