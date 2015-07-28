@@ -276,7 +276,7 @@ if sudo -u postgres psql -l | grep '^ spark\b' > /dev/null ; then
     #TODO: this check doesn't work fix it
     step "Creating spark user and database in PostgreSQL"
         try sudo -u postgres psql -c "CREATE USER spark REPLICATION LOGIN ENCRYPTED PASSWORD 'SparkPoint2015';"
-        try sudo -u postgres createdb spark -o spark
+        try sudo -u postgres createdb spark -O spark
     next
 fi
 
