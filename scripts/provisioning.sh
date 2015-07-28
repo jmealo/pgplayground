@@ -123,15 +123,17 @@ locale_set=$(locale | grep en_US.UTF-8)
 
 if [ ! locale_set ]; then
     step "Setting locale: "
-        try locale-gen en_US.UTF-8
+        for y in $(locale | cut -d '=' -f 2| sort |uniq ); do locale-gen $y; done
+        try locale-gen "en_US.UTF-8"
+        try dpkg-reconfigure locales
         try update-locale LANG=en_US.UTF-8
     next
 fi
 
-if ! command_exists "add-apt-repository" ] || ! is_installed "git" || ! is_installed "unzip"
+if ! command_exists "add-apt-repository" ] || ! is_installed "git" || ! is_installed "unzip" || ! is_installed "build-essential"
 then
     step "Installing packages required to install other packages: "
-        try apt-get install -y python-software-properties python-setuptools wget curl unzip nano ca-certificates git
+        try apt-get install -y python-software-properties python-setuptools wget curl unzip nano ca-certificates git sudo build-essential
         try git config --global core.editor "nano"
     next
 fi
