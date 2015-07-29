@@ -6,6 +6,7 @@ if [[ whoami -ne "root" ]]; then
 fi
 
 provision_ts=$(date +"%s")
+provision_dir=$(pwd)
 zpool_name="tank"
 
 echo_failure() {
@@ -269,16 +270,24 @@ next
 
 step "Creating extensions in PostgreSQL: "
     try wget https://gist.githubusercontent.com/jmealo/932470d47ae540399979/raw/bb4966eee3375e7ed993e729b76190694769c0bb/create-extensions.sql
-    try su postgres -c "psql -f create-extensions.sql"
+    try su postgres -c "psql -f $provision_dir/create-extensions.sql"
 next
 
 if sudo -u postgres psql -l | grep '^ spark\b' > /dev/null ; then
     #TODO: this check doesn't work fix it
     step "Creating spark user and database in PostgreSQL"
-        try sudo -u postgres psql -c "CREATE USER spark REPLICATION LOGIN ENCRYPTED PASSWORD 'SparkPoint2015';"
-        try sudo -u postgres createdb spark -O spark
+        try sudo -u postgres psql -c "CREATE USER backpack REPLICATION LOGIN ENCRYPTED PASSWORD 'SparkPoint2015';"
+        try sudo -u postgres createdb backpack -O backpack
     next
 fi
+
+step "Dropping and re-populating emphemeral tables"
+    try wget https://gist.githubusercontent.com/jmealo/0f35303c8c61349efe70/raw/ed686358cf8de48bee03d0c0bc6ef8b12f94d577/standards.tsv -O /tmp/standards.tsv
+    try wget https://gist.githubusercontent.com/jmealo/95fe198c54e92fb28da5/raw/f95f22108235630a2721a8c1ddf7822e7372aac4/standards_groups.tsv -O /tmp/standards-groups.tsv
+    try wget https://gist.githubusercontent.com/jmealo/89472dcc252513aa5238/raw/94931f09bfbb180152c032996c948156883cc67d/provision.sql
+    try chown -R postgres:postgres /tmp/*.tsv
+    try su postgres -c "psql spark -f provision.sql"
+next
 
 if ! command_exists "pgloader"
 then
