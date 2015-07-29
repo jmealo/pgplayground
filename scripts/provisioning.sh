@@ -147,7 +147,7 @@ then
     next
 fi
 
-if -b "/dev/sdb" && -b "/dev/sdc" && -b "/dev/sdd" && -b "/dev/sde"
+if [ -b "/dev/sdb" ] && [ -b "/dev/sdc" ] && [ -b "/dev/sdd" ] && [ -b "/dev/sde" ]
 then
 
     if ! is_installed "ubuntu-zfs"
