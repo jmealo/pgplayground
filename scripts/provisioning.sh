@@ -269,8 +269,8 @@ step "Creating template database with proper encoding: "
 next
 
 step "Creating extensions in PostgreSQL: "
-    try wget https://gist.githubusercontent.com/jmealo/932470d47ae540399979/raw/bb4966eee3375e7ed993e729b76190694769c0bb/create-extensions.sql
-    try su postgres -c "psql -f $provision_dir/create-extensions.sql"
+    try sudo -u postgres wget https://gist.githubusercontent.com/jmealo/932470d47ae540399979/raw/bb4966eee3375e7ed993e729b76190694769c0bb/create-extensions.sql
+    try sudo -u postgres psql -f create-extensions.sql
 next
 
 if sudo -u postgres psql -l | grep '^ spark\b' > /dev/null ; then
@@ -286,7 +286,8 @@ step "Dropping and re-populating emphemeral tables"
     try wget https://gist.githubusercontent.com/jmealo/95fe198c54e92fb28da5/raw/f95f22108235630a2721a8c1ddf7822e7372aac4/standards_groups.tsv -O /tmp/standards-groups.tsv
     try wget https://gist.githubusercontent.com/jmealo/89472dcc252513aa5238/raw/94931f09bfbb180152c032996c948156883cc67d/provision.sql
     try chown -R postgres:postgres /tmp/*.tsv
-    try su postgres -c "psql spark -f provision.sql"
+    try sudo -u postgres psql spark -f provision.sql
+    try sudo -u postgres psql spark -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO spark;"
 next
 
 if ! command_exists "pgloader"
