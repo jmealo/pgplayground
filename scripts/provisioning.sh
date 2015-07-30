@@ -327,7 +327,23 @@ step "Cleaning up temporary directory for postgrest user"
     try rm -rf "/tmp/postgres.$provision_ts"
 next
 
+if [ ! -d "/opt/phppgadmin" ]; then
+  step "Installing phppgadmin"
+        try cd /opt
+        try git clone https://github.com/phppgadmin/phppgadmin.git
+        try apt-get -y install nginx php5-fpm php5-pgsql
+        try $(perl -0777 -pe "s/\$conf\['servers'\]\[0\]\['host'\] = '';/\$conf\['servers'\]\[0\]\['host'\] = 'localhost';/" /opt/phppgadmin/conf/config.inc.php-dist > /opt/phppgadmin/conf/config.inc.php)
+        try chown -R www-data:www-data /opt/phppgadmin
+        try rm /etc/nginx/sites-enabled/default
+        try wget https://gist.githubusercontent.com/jmealo/c2fc83a8b5d84bc4297e/raw/75a0e49755794e4e004399aad7b21160b15914e6/phppgadmin -o /etc/nginx/sites-available/phppgadmin
+        try ln -s /etc/nginx/sites-available/phppgadmin /etc/nginx/sites-enabled/
+        try service nginx reload
+        try sudo -u postgres psql -c "CREATE USER developer SUPERUSER REPLICATION LOGIN ENCRYPTED PASSWORD 'SparkPoint2015';"
+  next
+fi
+
 echo
-echo "Provisioning complete"
+echo "Provisioning complete, returning to: $provision_dir"
+cd "$provision_dir"
 echo
 exit 0
