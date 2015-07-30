@@ -1647,11 +1647,47 @@ var links = [
 
     {
         "source": {
-            "name": "K.G.1,2",
+            "name": "K.G.1",
             "description": "Describe objects in the environment using names of shapes, and describe the relative positions of these objects using terms such as above, below, beside, in front of, behind, and next to."
         },
         "target": {
-            "name": "K.G.3,4",
+            "name": "K.G.3",
+            "description": "Identify shapes as two-dimensional (lying in a plane, “flat”) or three- dimensional (“solid”)."
+        },
+        "type": "forward"
+    },
+
+    {
+        "source": {
+            "name": "K.G.1",
+            "description": "Describe objects in the environment using names of shapes, and describe the relative positions of these objects using terms such as above, below, beside, in front of, behind, and next to."
+        },
+        "target": {
+            "name": "K.G.4",
+            "description": "Identify shapes as two-dimensional (lying in a plane, “flat”) or three- dimensional (“solid”)."
+        },
+        "type": "forward"
+    },
+
+    {
+        "source": {
+            "name": "K.G.2",
+            "description": "Describe objects in the environment using names of shapes, and describe the relative positions of these objects using terms such as above, below, beside, in front of, behind, and next to."
+        },
+        "target": {
+            "name": "K.G.3",
+            "description": "Identify shapes as two-dimensional (lying in a plane, “flat”) or three- dimensional (“solid”)."
+        },
+        "type": "forward"
+    },
+
+    {
+        "source": {
+            "name": "K.G.2",
+            "description": "Describe objects in the environment using names of shapes, and describe the relative positions of these objects using terms such as above, below, beside, in front of, behind, and next to."
+        },
+        "target": {
+            "name": "K.G.4",
             "description": "Identify shapes as two-dimensional (lying in a plane, “flat”) or three- dimensional (“solid”)."
         },
         "type": "forward"
