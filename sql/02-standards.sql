@@ -47,7 +47,7 @@ COPY standards (
   parent_asn_id
 ) FROM '/tmp/standards.tsv' NULL '';
 
-CREATE UNIQUE INDEX standards_group_asn_id_idx ON "standards" (asn_id) WITH (fillfactor = 100);
+CREATE UNIQUE INDEX standards_asn_id_idx ON "standards" (asn_id) WITH (fillfactor = 100);
 CREATE INDEX standards_code_idx ON "standards" (code) WITH (fillfactor = 100);
 CREATE INDEX standards_jurisdiction_idx ON standards USING btree(jurisdiction) WITH (fillfactor = 100);
 CREATE INDEX standards_grades_idx ON standards USING btree(grades) WITH (fillfactor = 100);
