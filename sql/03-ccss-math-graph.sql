@@ -1,8 +1,8 @@
 DO $$
 BEGIN
 
-IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'standard_edge_type') THEN
-    CREATE TYPE public.standard_edge_type AS ENUM (
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'standards_edge_type') THEN
+    CREATE TYPE public.standards_edge_type AS ENUM (
       'dependency',
       'relates_to'
     );
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS "standards_edges" (
   "weight" integer,
 
   PRIMARY KEY ("id"),
-  CONSTRAINT standard_edges_cycle_constraint UNIQUE (target_asn_id, source_asn_id, rel_type)
+  CONSTRAINT standards_edges_cycle_constraint UNIQUE (target_asn_id, source_asn_id, rel_type)
 );
 
 DROP INDEX IF EXISTS standards_edges_target_asn_id_idx;
@@ -40,12 +40,3 @@ CREATE INDEX standards_edges_source_asn_id_idx ON "standards_edges" (source_asn_
 CREATE INDEX standards_edges_rel_type_idx ON "standards_edges" (rel_type);
 
 VACUUM FULL ANALYZE standards_edges;
-
-DROP MATERIALIZED VIEW IF EXISTS public.standards_nodes;
-
-CREATE MATERIALIZED VIEW public.standards_nodes AS
-     SELECT asn_id, code, name, subject, jurisdiction, standard_document, grades, parent_asn_id
-       FROM standards
-  UNION ALL
-     SELECT asn_id, code, name, subject, jurisdiction, standard_document, grades, parent_asn_id
-       FROM standards_groups;

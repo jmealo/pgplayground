@@ -43,11 +43,11 @@ SELECT outer_tree.asn_id, subject, jurisdiction, name, grades,
   (SELECT array_to_json(array_agg(row_to_json(d))) FROM (
      SELECT tree.asn_id,
        standards_nodes.parent_asn_id,
-       standards_nodes.name,
+       standards_nodes.title,
        standards_nodes.code,
        standards.alt_code,
        (CASE
-        WHEN (array_length(tree.ancestors, 1) >= 1 OR standards_nodes.standard_document IS NULL)
+        WHEN (array_length(tree.ancestors, 1) >= 1 OR standards_nodes.parent_asn_id IS NULL)
           THEN false
         ELSE true
         END) AS leaf
@@ -64,3 +64,4 @@ WHERE outer_tree.asn_id LIKE 'D%';
 
 DROP INDEX IF EXISTS standards_documents_asn_id;
 CREATE UNIQUE INDEX standards_documents_asn_id ON public.standards_documents (asn_id);
+

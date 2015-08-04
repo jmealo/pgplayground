@@ -1,8 +1,8 @@
 DO $$
 BEGIN
 
-IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'standard_grade') THEN
-    CREATE TYPE public.standard_grade AS ENUM (
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'standards_grade') THEN
+    CREATE TYPE public.standards_grade AS ENUM (
             'P',
             'K',
             '1',
@@ -21,22 +21,22 @@ IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'standard_grade') THEN
         );
 END IF;
 
-DROP MATERIALIZED VIEW IF EXISTS public.standard_grades;
+DROP MATERIALIZED VIEW IF EXISTS public.standards_grades;
 
-CREATE MATERIALIZED VIEW public.standard_grades AS
-    SELECT e.enumlabel AS "standard_grade",
+CREATE MATERIALIZED VIEW public.standards_grades AS
+    SELECT e.enumlabel AS "standards_grade",
            e.enumsortorder AS "id"
      FROM pg_enum e
      JOIN pg_type t ON e.enumtypid = t.oid
-    WHERE t.typname = 'standard_grade';
+    WHERE t.typname = 'standards_grade';
 END$$;
 
 
 DO $$
 BEGIN
 
-IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'standard_subject') THEN
-    CREATE TYPE public.standard_subject AS ENUM (
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'standards_subject') THEN
+    CREATE TYPE public.standards_subject AS ENUM (
             'English',
             'Math',
             'The Arts',
@@ -49,80 +49,128 @@ IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'standard_subject') THEN
         );
 END IF;
 
-DROP MATERIALIZED VIEW IF EXISTS public.standard_subjects;
+DROP MATERIALIZED VIEW IF EXISTS public.standards_subjects;
 
-CREATE MATERIALIZED VIEW public.standard_subjects AS
-    SELECT e.enumlabel AS "standard_subject",
+CREATE MATERIALIZED VIEW public.standards_subjects AS
+    SELECT e.enumlabel AS "standards_subject",
            e.enumsortorder AS "id"
      FROM pg_enum e
      JOIN pg_type t ON e.enumtypid = t.oid
-    WHERE t.typname = 'standard_subject';
+    WHERE t.typname = 'standards_subject';
 END$$;
 
 
 DO $$
 BEGIN
 
-IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'standard_jurisdiction') THEN
-    CREATE TYPE public.standard_jurisdiction AS ENUM (
-            'CCSS',
-            'NGSS',
-            'NJ',
-            'MI'
-        );
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'standards_jurisdiction') THEN
+    CREATE TYPE public.standards_jurisdiction AS ENUM (
+      'CCSS',
+      'NGSS',
+      'AL',
+      'AK',
+      'AS',
+      'AZ',
+      'AR',
+      'CA',
+      'CO',
+      'CT',
+      'DE',
+      'DC',
+      'FM',
+      'FL',
+      'GA',
+      'GU',
+      'HI',
+      'ID',
+      'IL',
+      'IN',
+      'IA',
+      'KS',
+      'KY',
+      'LA',
+      'ME',
+      'MH',
+      'MD',
+      'MA',
+      'MI',
+      'MN',
+      'MS',
+      'MO',
+      'MT',
+      'NE',
+      'NV',
+      'NH',
+      'NJ',
+      'NM',
+      'NY',
+      'NC',
+      'ND',
+      'MP',
+      'OH',
+      'OK',
+      'OR',
+      'PW',
+      'PA',
+      'PR',
+      'RI',
+      'SC',
+      'SD',
+      'TN',
+      'TX',
+      'UT',
+      'VT',
+      'VI',
+      'VA',
+      'WA',
+      'WV',
+      'WI',
+      'WY'
+    );
 END IF;
 
-DROP MATERIALIZED VIEW IF EXISTS public.standard_jurisdictions;
+DROP MATERIALIZED VIEW IF EXISTS public.standards_jurisdictions;
 
-CREATE MATERIALIZED VIEW public.standard_jurisdictions AS
-    SELECT e.enumlabel AS "standard_jurisdiction",
+CREATE MATERIALIZED VIEW public.standards_jurisdictions AS
+    SELECT e.enumlabel AS "standards_jurisdiction",
            e.enumsortorder AS "id"
      FROM pg_enum e
      JOIN pg_type t ON e.enumtypid = t.oid
-    WHERE t.typname = 'standard_jurisdiction';
+    WHERE t.typname = 'standards_jurisdiction';
 END$$;
 
 
 DO $$
 BEGIN
 
-IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'standard_document') THEN
-    CREATE TYPE public.standard_document AS ENUM (
-            'English Language Arts & Literacy',
-            'Next Generation Science',
-            'Mathematics',
+DROP MATERIALIZED VIEW IF EXISTS public.standards_documents;
+DROP TYPE IF EXISTS public.standards_documents;
 
-            'Credit Guidelines for Health Education',
-            'Health and Physical Education',
-            'Physical Education',
+CREATE TABLE IF NOT EXISTS "public"."standards_documents" (
+  "id" serial,
+  "asn_id" char(8),
+  "title" character varying,
+  "full_title" character varying,
+  "subject" standards_subject,
+  "jurisdiction" standards_jurisdiction,
+  "grades" standards_grade[],
+  PRIMARY KEY ("id")
+);
 
-            'Science (K-7)',
-            '(HS) Science Essential',
-            'Biology (HS)',
-            'Chemistry (HS)',
-            'Earth Science (HS)',
+CREATE UNIQUE INDEX standards_documents_asn_id_idx ON "standards_documents" (asn_id) WITH (fillfactor = 100);
+CREATE INDEX standards_documents_grades_idx ON standards_documents USING btree(grades) WITH (fillfactor = 100);
+CREATE INDEX standards_documents_subject_idx ON standards_documents (subject)  WITH (fillfactor = 100);
+CREATE INDEX standards_documents_jurisdiction_idx ON standards_documents (jurisdiction)  WITH (fillfactor = 100);
 
-            'Social Studies',
-            'Social Studies (K-8)',
-            'Social Studies (HS)',
+TRUNCATE table standards_documents;
 
-            'Technology',
-            'Educational Technology for Students (METS-S)',
+COPY standards_documents (
+  asn_id,
+  jurisdiction,
+  subject,
+  grades,
+  title
+) FROM '/tmp/standards_documents.tsv' NULL '';
 
-            'Visual and Performing Arts',
-            'Visual Arts, Music, Dance & Theater',
 
-            'World Language',
-            'World Languages'
-        );
-END IF;
-
-DROP MATERIALIZED VIEW IF EXISTS public.standard_documents;
-
-CREATE MATERIALIZED VIEW public.standard_documents AS
-    SELECT e.enumlabel AS "standard_document",
-           e.enumsortorder AS "id"
-     FROM pg_enum e
-     JOIN pg_type t ON e.enumtypid = t.oid
-    WHERE t.typname = 'standard_document';
 END$$;

@@ -41,7 +41,6 @@ try() {
     # Run the command.
     "$@"
 
-
     # Check if command failed and update $STEP_OK if so.
     local EXIT_CODE=$?
 
@@ -282,10 +281,11 @@ if sudo -u postgres psql -l | grep '^ spark\b' > /dev/null ; then
 fi
 
 step "Dropping and re-populating emphemeral tables"
-    try wget https://gist.githubusercontent.com/jmealo/0f35303c8c61349efe70/raw/ed686358cf8de48bee03d0c0bc6ef8b12f94d577/standards.tsv -O /tmp/standards.tsv
-    try wget https://gist.githubusercontent.com/jmealo/95fe198c54e92fb28da5/raw/f95f22108235630a2721a8c1ddf7822e7372aac4/standards_groups.tsv -O /tmp/standards-groups.tsv
     try wget https://gist.githubusercontent.com/jmealo/3a7c5149a7b6434a34c9/raw/1403c2b72051869c74ebbf5527fa7f4c09e5272a/math_edges.tsv -O /tmp/math_edges.tsv
-    try wget https://gist.githubusercontent.com/jmealo/60c9e7623b5868f05b74/raw/01d94789cad52e2bbdb01116579d819681171ed1/provision.sql
+    try wget https://gist.githubusercontent.com/jmealo/40ae7103d9abe7872332/raw/fd90a25e90fe7a172604718e988268bbc5426ca3/standards_groups.tsv -O /tmp/standards_groups.tsv
+    try wget https://gist.githubusercontent.com/jmealo/fb925e9e07af09604b0c/raw/6cda51c833f67a02c74a5fd4e78fcc6d108e6686/standards_documents.tsv -O /tmp/standards_documents.tsv
+    try wget https://gist.githubusercontent.com/jmealo/6a609840c0a1a1f8238c/raw/a3f5a597bdb5ecb1074b63a82e24b22d9f9d18cb/standards.tsv -O /tmp/standards.tsv
+    try wget https://gist.githubusercontent.com/jmealo/ebb5ac34550f2f4ae799/raw/b013199c18f31026d373bbef06cf45ca7a7bc7f9/provision.sql
     try chown -R postgres:postgres /tmp/*.tsv
     try sudo -u postgres psql spark -f provision.sql
     try sudo -u postgres psql spark -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO spark;"
@@ -341,6 +341,24 @@ if [ ! -d "/opt/phppgadmin" ]; then
         try service nginx reload
         try sudo -u postgres psql -c "CREATE USER developer SUPERUSER REPLICATION LOGIN ENCRYPTED PASSWORD 'SparkPoint2015';"
   next
+fi
+
+if ! is_installed nodejs
+then
+    step "Installing node.js 0.12.X"
+        try curl -sL https://deb.nodesource.com/setup_0.12 | sudo bash -
+        try apt-get install -y nodejs
+    next
+fi
+
+if [! -d /opt/ng-admin-postgrest ]; then
+    step "Installing ng-admin-postgrest"
+        try cd /opt
+        try git clone https://github.com/marmelab/ng-admin-postgrest.git
+        try cd ng-admin-postgrest
+        try npm install -g bower
+
+    next
 fi
 
 echo
