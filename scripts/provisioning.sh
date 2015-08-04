@@ -351,7 +351,7 @@ then
     next
 fi
 
-if [! -d /opt/ng-admin-postgrest ]; then
+if [ ! -d /opt/ng-admin-postgrest ]; then
     step "Installing ng-admin-postgrest"
         try cd /opt
         try git clone https://github.com/marmelab/ng-admin-postgrest.git
