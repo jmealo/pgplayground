@@ -33,3 +33,10 @@ CREATE INDEX sparkpoints_edges_metadata_gin_idx  ON sparkpoints_edges USING GIN 
 CREATE INDEX sparkpoints_edges_target_asn_id_idx ON "sparkpoints_edges" (target_asn_id);
 CREATE INDEX sparkpoints_edges_source_asn_id_idx ON "sparkpoints_edges" (source_asn_id);
 CREATE INDEX sparkpoints_edges_rel_type_idx      ON "sparkpoints_edges" (rel_type);
+
+-- TODO: Temporary fix for null subjects
+UPDATE standards_groups SET subject = (
+  SELECT subject
+    FROM standards_nodes
+   WHERE standards_nodes.asn_id = standards_groups.parent_asn_id)
+ WHERE subject IS NULL;
