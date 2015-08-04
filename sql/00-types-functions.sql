@@ -143,24 +143,17 @@ END$$;
 DO $$
 BEGIN
 
-DROP MATERIALIZED VIEW IF EXISTS public.standards_documents;
-DROP TYPE IF EXISTS public.standards_documents;
-
 CREATE TABLE IF NOT EXISTS "public"."standards_documents" (
   "id" serial,
   "asn_id" char(8),
-  "title" character varying,
-  "full_title" character varying,
+  "title" text,
+  "full_title" text,
   "subject" standards_subject,
   "jurisdiction" standards_jurisdiction,
   "grades" standards_grade[],
+  "children" jsonb,
   PRIMARY KEY ("id")
 );
-
-CREATE UNIQUE INDEX standards_documents_asn_id_idx ON "standards_documents" (asn_id) WITH (fillfactor = 100);
-CREATE INDEX standards_documents_grades_idx ON standards_documents USING btree(grades) WITH (fillfactor = 100);
-CREATE INDEX standards_documents_subject_idx ON standards_documents (subject)  WITH (fillfactor = 100);
-CREATE INDEX standards_documents_jurisdiction_idx ON standards_documents (jurisdiction)  WITH (fillfactor = 100);
 
 TRUNCATE table standards_documents;
 
@@ -172,5 +165,14 @@ COPY standards_documents (
   title
 ) FROM '/tmp/standards_documents.tsv' NULL '';
 
+DROP INDEX IF EXISTS standards_documents_asn_id_idx;
+DROP INDEX IF EXISTS standards_documents_grades_idx;
+DROP INDEX IF EXISTS standards_documents_subject_idx;
+DROP INDEX IF EXISTS standards_documents_jurisdiction_idx;
+  
+CREATE UNIQUE INDEX standards_documents_asn_id_idx ON "standards_documents" (asn_id) WITH (fillfactor = 100);
+CREATE INDEX standards_documents_grades_idx ON standards_documents USING btree(grades) WITH (fillfactor = 100);
+CREATE INDEX standards_documents_subject_idx ON standards_documents (subject)  WITH (fillfactor = 100);
+CREATE INDEX standards_documents_jurisdiction_idx ON standards_documents (jurisdiction)  WITH (fillfactor = 100);
 
 END$$;

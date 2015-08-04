@@ -285,7 +285,7 @@ step "Dropping and re-populating emphemeral tables"
     try wget https://gist.githubusercontent.com/jmealo/40ae7103d9abe7872332/raw/fd90a25e90fe7a172604718e988268bbc5426ca3/standards_groups.tsv -O /tmp/standards_groups.tsv
     try wget https://gist.githubusercontent.com/jmealo/fb925e9e07af09604b0c/raw/6cda51c833f67a02c74a5fd4e78fcc6d108e6686/standards_documents.tsv -O /tmp/standards_documents.tsv
     try wget https://gist.githubusercontent.com/jmealo/6a609840c0a1a1f8238c/raw/a3f5a597bdb5ecb1074b63a82e24b22d9f9d18cb/standards.tsv -O /tmp/standards.tsv
-    try wget https://gist.githubusercontent.com/jmealo/ebb5ac34550f2f4ae799/raw/b013199c18f31026d373bbef06cf45ca7a7bc7f9/provision.sql
+    try wget https://gist.githubusercontent.com/jmealo/66c0d1baf4a268d4232f/raw/ccbc743611b013d2ae3cc1e2165514828761a780/provision.sql
     try chown -R postgres:postgres /tmp/*.tsv
     try sudo -u postgres psql spark -f provision.sql
     try sudo -u postgres psql spark -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO spark;"
