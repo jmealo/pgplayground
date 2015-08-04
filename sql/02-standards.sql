@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS "standards" (
   "jurisdiction" standards_jurisdiction,
   "grades" standards_grade[],
   "parent_asn_id" char(8),
-  "document_asn_id" char(8),
+  "document_asn_id" char(8)  NOT NULL,
   PRIMARY KEY ("id"),
   UNIQUE ("asn_id")
 );

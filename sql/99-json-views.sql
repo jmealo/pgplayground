@@ -57,7 +57,17 @@ UPDATE standards_documents sd SET children = (SELECT array_to_json(array_agg(row
       ON standards_nodes.asn_id = tree.asn_id
     LEFT JOIN standards
       ON standards.asn_id = tree.asn_id
-  WHERE sd.asn_id = ANY(tree.ancestors)) d)::JSONB
+  WHERE sd.asn_id = ANY(tree.ancestors)) d)::JSONB,
+  standards_count = (
+    SELECT count(asn_id)
+    FROM standards
+    WHERE document_asn_id = sd.asn_id
+  ),
+  groups_count = (
+    SELECT count(asn_id)
+    FROM standards_groups
+    WHERE document_asn_id = sd.asn_id
+  )
   WHERE asn_id IS NOT NULL;
 END$$;
 

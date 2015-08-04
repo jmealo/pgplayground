@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS "standards_groups" (
     "jurisdiction" standards_jurisdiction,
     "grades" standards_grade[],
     "parent_asn_id" char(8),
-    "document_asn_id" char(8),
+    "document_asn_id" char(8) NOT NULL,
     "children" char(8)[],
     PRIMARY KEY ("id"),
     UNIQUE ("asn_id")
@@ -36,14 +36,14 @@ COPY standards_groups (
     jurisdiction,
     grades,
     parent_asn_id,
-    children,
-    document_asn_id
+    document_asn_id,
+    children
 ) FROM '/tmp/standards_groups.tsv';
 
 CREATE UNIQUE INDEX standards_group_asn_id_idx ON "standards_groups" (asn_id) WITH (fillfactor = 100);
 CREATE INDEX standards_group_code_idx ON "standards_groups" (code) WITH (fillfactor = 100);
 CREATE INDEX standards_groups_jurisdiction_idx ON standards_groups USING btree(jurisdiction) WITH (fillfactor = 100);
-CREATE INDEX standards_groups_grades_idx ON standards_groups USING btree(grades) WITH (fillfactor = 100);;
+CREATE INDEX standards_groups_grades_idx ON standards_groups USING btree(grades) WITH (fillfactor = 100);
 CREATE INDEX standards_groups_subject_idx ON standards_groups (subject)  WITH (fillfactor = 100);
 CREATE INDEX standards_groups_parent_asn_id_idx ON standards_groups (parent_asn_id) WITH (fillfactor = 100);
 CREATE INDEX standards_groups_document_asn_id_idx ON standards_groups (document_asn_id) WITH (fillfactor=100);
