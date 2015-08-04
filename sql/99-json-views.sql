@@ -47,11 +47,7 @@ UPDATE standards_documents sd SET children = (SELECT array_to_json(array_agg(row
     standards_nodes.title,
     standards_nodes.code,
     standards.alt_code,
-    (CASE
-     WHEN (array_length(tree.ancestors, 1) >= 1 OR standards_nodes.parent_asn_id IS NULL)
-       THEN false
-     ELSE true
-     END) AS leaf
+    (NOT EXISTS (SELECT asn_id from standards_groups sg WHERE sg.asn_id = tree.asn_id)) AS leaf
   FROM tree
     JOIN standards_nodes
       ON standards_nodes.asn_id = tree.asn_id
