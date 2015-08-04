@@ -282,7 +282,7 @@ fi
 
 step "Dropping and re-populating emphemeral tables"
     try wget https://gist.githubusercontent.com/jmealo/3a7c5149a7b6434a34c9/raw/1403c2b72051869c74ebbf5527fa7f4c09e5272a/math_edges.tsv -O /tmp/math_edges.tsv
-    try wget https://gist.githubusercontent.com/jmealo/40ae7103d9abe7872332/raw/fd90a25e90fe7a172604718e988268bbc5426ca3/standards_groups.tsv -O /tmp/standards_groups.tsv
+    try wget https://gist.githubusercontent.com/jmealo/aa729e183f8b8e791d78/raw/c86980959f58bd85d52e8a4a34b7c5fa8460392a/standards_groups.tsv -O /tmp/standards_groups.tsv
     try wget https://gist.githubusercontent.com/jmealo/fb925e9e07af09604b0c/raw/6cda51c833f67a02c74a5fd4e78fcc6d108e6686/standards_documents.tsv -O /tmp/standards_documents.tsv
     try wget https://gist.githubusercontent.com/jmealo/6a609840c0a1a1f8238c/raw/a3f5a597bdb5ecb1074b63a82e24b22d9f9d18cb/standards.tsv -O /tmp/standards.tsv
     try wget https://gist.githubusercontent.com/jmealo/66c0d1baf4a268d4232f/raw/ccbc743611b013d2ae3cc1e2165514828761a780/provision.sql
