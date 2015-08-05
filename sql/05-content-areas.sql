@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS "content_areas" (
 DROP INDEX IF EXISTS content_areas_code_idx;
 DROP INDEX IF EXISTS content_areas_parent_id_idx;
 
+DELETE FROM "content_areas" where id <= 37;
+
 INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (1, null, 'Math', null);
 INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (24, null, 'Arithmetic', 1);
 INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (15, null, 'Algebra', 1);
@@ -25,9 +27,9 @@ INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (22, null, 'Chemi
 INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (23, null, 'Foundation', 2);
 
 INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (3, null, 'English', null);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (34, null, 'Reading', 3);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (35, null, 'Writing', 3);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (36, null, 'Literature', 3);
+INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (35, null, 'Reading', 3);
+INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (36, null, 'Writing', 3);
+INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (37, null, 'Literature', 3);
 
 INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (4, null, 'World Language', null);
 INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (11, null, 'Spanish', 4);
