@@ -288,7 +288,8 @@ step "Dropping and re-populating emphemeral tables"
     try wget https://gist.githubusercontent.com/jmealo/66c0d1baf4a268d4232f/raw/ccbc743611b013d2ae3cc1e2165514828761a780/provision.sql
     try chown -R postgres:postgres /tmp/*.tsv
     try sudo -u postgres psql spark -f provision.sql
-    try sudo -u postgres psql spark -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO spark;"
+    try sudo -u postgres psql spark -c "alter default privileges in schema public grant usage on sequences to spark";
+    try sudo -u postgres psql spark -c "alter default privileges in schema public grant select, insert, update, delete on tables to spark";
 next
 
 if ! command_exists "pgloader"
