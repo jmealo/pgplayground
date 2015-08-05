@@ -366,6 +366,13 @@ if [ ! -d /opt/ng-admin-postgrest ]; then
     next
 fi
 
+if command_exists "postgrest"
+then
+    step "Restarting postgrest"
+        try service postgrest restart
+    next
+fi
+
 echo
 echo "Provisioning complete, returning to: $provision_dir"
 cd "$provision_dir"
