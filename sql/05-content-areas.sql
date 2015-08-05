@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS "content_areas" (
   "code" text,
   "title" text,
   "parent_id" integer,
+  "path" ltree,
   PRIMARY KEY ("id"),
   CONSTRAINT content_areas_title_parent_id_constraint UNIQUE (parent_id, title)
 );
@@ -12,7 +13,8 @@ BEGIN TRANSACTION;
 DROP INDEX IF EXISTS content_areas_code_idx;
 DROP INDEX IF EXISTS content_areas_parent_id_idx;
 
--- TODO: Find a better way to refresh system data; take into consider that we'll have foreign key constraints
+-- TODO: Find a better way to refresh system data; take into consideration that we'll have foreign key constraints
+-- (maybe we can drop all indexes and fks until the end of provisioning then re-add them?)
 DELETE FROM "content_areas" where id <= 37;
 
 DO $$
@@ -56,6 +58,7 @@ BEGIN
     ('Foundation', science_id),
 
     -- English
+    ('Language', english_id),
     ('Reading', english_id),
     ('Writing', english_id),
     ('Literature', english_id),
@@ -86,7 +89,44 @@ BEGIN
     ('App Development', tech_id);
 END $$;
 
+WITH RECURSIVE tree AS (
+  SELECT
+    id, title, parent_id,
+    ARRAY [title] :: TEXT [] AS path
+  FROM content_areas
+
+  UNION ALL
+
+  SELECT
+    content_areas.id, content_areas.title, content_areas.parent_id,
+    tree.path || content_areas.title
+  FROM content_areas, tree
+  WHERE content_areas.parent_id = tree.id
+)
+
+UPDATE content_areas
+   SET path = text2ltree(subquery.path)
+  FROM (
+     SELECT DISTINCT ON (id) id,
+            array_length(path, 1) AS depth,
+            replace(
+                replace(
+                    lower(
+                        array_to_string(tree.path, '.')
+                    ),
+                    ' ', '_'
+                ),
+                '&', 'and'
+             )
+          AS path
+        FROM tree
+    ORDER BY id, depth desc)
+    AS subquery
+ WHERE content_areas.id = subquery.id;
+
 CREATE INDEX content_areas_code_idx ON content_areas (code);
 CREATE INDEX content_areas_parent_id_idx ON content_areas (parent_id);
+CREATE INDEX content_areas_path_gist_idx ON content_areas USING gist(path);
+CREATE INDEX content_areas_path_idx ON content_areas USING btree(path);
 
 COMMIT;
