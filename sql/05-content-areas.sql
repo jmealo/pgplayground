@@ -7,55 +7,86 @@ CREATE TABLE IF NOT EXISTS "content_areas" (
   CONSTRAINT content_areas_title_parent_id_constraint UNIQUE (parent_id, title)
 );
 
+BEGIN TRANSACTION;
+
 DROP INDEX IF EXISTS content_areas_code_idx;
 DROP INDEX IF EXISTS content_areas_parent_id_idx;
 
+-- TODO: Find a better way to refresh system data; take into consider that we'll have foreign key constraints
 DELETE FROM "content_areas" where id <= 37;
 
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (1, null, 'Math', null);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (24, null, 'Arithmetic', 1);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (15, null, 'Algebra', 1);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (16, null, 'Geometry', 1);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (17, null, 'Calculus', 1);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (18, null, 'Trigonometry', 1);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (19, null, 'Consumer Finance', 1);
+DO $$
 
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (2, null, 'Science', null);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (20, null, 'Biology', 2);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (21, null, 'Physics', 2);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (22, null, 'Chemistry', 2);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (23, null, 'Foundation', 2);
+-- Define variables to hold the id sequence for each top-level content area
+DECLARE math_id int;
+DECLARE science_id int;
+DECLARE english_id int;
+DECLARE world_language_id int;
+DECLARE social_studies_id int;
+DECLARE phys_ed_id int;
+DECLARE art_id int;
+DECLARE tech_id int;
+DECLARE health_id int;
 
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (3, null, 'English', null);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (35, null, 'Reading', 3);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (36, null, 'Writing', 3);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (37, null, 'Literature', 3);
+BEGIN
+  -- Insert top level content areas
+  INSERT INTO "content_areas" (title) VALUES ('Math') RETURNING id INTO math_id;
+  INSERT INTO "content_areas" (title) VALUES ('Science') RETURNING id INTO science_id;
+  INSERT INTO "content_areas" (title) VALUES ('English') RETURNING id INTO english_id;
+  INSERT INTO "content_areas" (title) VALUES ('World Language') RETURNING id INTO world_language_id;
+  INSERT INTO "content_areas" (title) VALUES ('Social Studies') RETURNING id INTO social_studies_id;
+  INSERT INTO "content_areas" (title) VALUES ('Physical Education') RETURNING id INTO phys_ed_id;
+  INSERT INTO "content_areas" (title) VALUES ('Art') RETURNING id INTO art_id;
+  INSERT INTO "content_areas" (title) VALUES ('Technology') RETURNING id INTO tech_id;
+  INSERT INTO "content_areas" (title) VALUES ('Health') RETURNING id INTO health_id;
 
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (4, null, 'World Language', null);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (11, null, 'Spanish', 4);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (12, null, 'French', 4);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (13, null, 'German', 4);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (14, null, 'Mandarin', 4);
+  INSERT INTO "content_areas" (title, parent_id) VALUES
+    -- Math
+    ('Arithmetic', math_id),
+    ('Algebra', math_id),
+    ('Geometry', math_id),
+    ('Calculus', math_id),
+    ('Trigonometry', math_id),
+    ('Consumer Finance', math_id),
 
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (5, null, 'Social Studies', null);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (31, null, 'US Geography', 5);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (32, null, 'US History', 5);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (33, null, 'World Geography', 5);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (34, null, 'World History', 5);
+    -- Science
+    ('Biology', science_id),
+    ('Physics', science_id),
+    ('Chemistry', science_id),
+    ('Foundation', science_id),
 
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (6, null, 'Physical Education', null);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (7, null, 'Health', null);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (8, null, 'Music', null);
+    -- English
+    ('Reading', english_id),
+    ('Writing', english_id),
+    ('Literature', english_id),
 
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (9, null, 'Art', null);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (10, null, 'Photography', 9);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (25, null, 'Pottery', 9);
+    -- World Language
+    ('Spanish', world_language_id),
+    ('French', world_language_id),
+    ('German', world_language_id),
+    ('Mandarin', world_language_id),
 
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (26, null, 'Technology', null);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (27, null, 'Programming', 26);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (28, null, 'Robotics', 26);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (29, null, 'Web Design', 26);
-INSERT INTO "content_areas"(id, code, title, parent_id) VALUES (30, null, 'App Development', 26);
+    -- Social Studies
+    ('US Geography', social_studies_id),
+    ('US History', social_studies_id),
+    ('World Geography', social_studies_id),
+    ('World History', social_studies_id),
+
+    -- Art
+    ('Photography', art_id),
+    ('Pottery', art_id),
+    ('Art History', art_id),
+    ('Fine Art', art_id),
+    ('Color and 2D', art_id),
+
+    -- Technology
+    ('Programming', tech_id),
+    ('Robotics', tech_id),
+    ('Web Design', tech_id),
+    ('App Development', tech_id);
+END $$;
 
 CREATE INDEX content_areas_code_idx ON content_areas (code);
 CREATE INDEX content_areas_parent_id_idx ON content_areas (parent_id);
+
+COMMIT;
