@@ -43,7 +43,7 @@ IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'standards_subject') THEN
             'Health',
             'Social Studies',
             'Technology',
-            'Foreign Language',
+            'World Language',
             'Science',
             'Physical Education'
         );
