@@ -93,9 +93,9 @@ WITH RECURSIVE tree AS (
   SELECT
     id, title, parent_id,
     ARRAY [title] :: TEXT [] AS path
-  FROM content_areas
+  FROM content_areas WHERE parent_id IS NULL
 
-  UNION ALL
+  UNION
 
   SELECT
     content_areas.id, content_areas.title, content_areas.parent_id,
@@ -107,21 +107,17 @@ WITH RECURSIVE tree AS (
 UPDATE content_areas
    SET path = text2ltree(subquery.path)
   FROM (
-     SELECT DISTINCT ON (id) id,
-            array_length(path, 1) AS depth,
+     SELECT id,
             replace(
                 replace(
                     lower(
                         array_to_string(tree.path, '.')
                     ),
-                    ' ', '_'
-                ),
-                '&', 'and'
-             )
-          AS path
-        FROM tree
-    ORDER BY id, depth desc)
-    AS subquery
+                    ' ', '_'),
+                '&', 'and')
+         AS path
+       FROM tree
+  ) AS subquery
  WHERE content_areas.id = subquery.id;
 
 CREATE INDEX content_areas_code_idx ON content_areas (code);
