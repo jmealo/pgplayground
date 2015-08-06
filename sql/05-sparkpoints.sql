@@ -89,7 +89,7 @@ BEGIN
 
   -- INSERT INTO "sparkpoints" (student_title, abbreviation, subject, content_area_id, automatic) VALUES (
   --  'Grammar', 'GRA', 'English', content_area_id, true
-  -- ) RETURNING id INTO grammar_id;
+  --) RETURNING id INTO grammar_id;
 
   INSERT INTO "sparkpoints" (student_title, abbreviation, parent_id, subject, content_area_id, automatic) VALUES
 
@@ -188,7 +188,7 @@ ELA.WRT.PRO => S1143939,S1143937, S1143AE1
 ELA.WRT.RES => S1143938
 ELA.WRT.GRA => S1143730, S11436AA
 
-ELA.VOC => S11437EB, S1143730
+ELA.VOC => S11437EB
  */
 
 TRUNCATE TABLE sparkpoint_standard_alignments;
@@ -197,21 +197,21 @@ INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.RDG.FDN') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S11436A7')
-);
 
-INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  UNION
+
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.RDG.LIT') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S11436A5')
-);
 
-INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  UNION
+
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.RDG.INF') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S11436A6')
-);
 
-INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  UNION
+
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.RDG.XD') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S114372D')
@@ -227,9 +227,9 @@ INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.RDG.XD') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S11437A4')
-);
 
-INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  UNION
+
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.GRA') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S1143936')
@@ -239,9 +239,9 @@ INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.GRA') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S11438C0')
-);
 
-INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  UNION
+
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.XD') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S11437A5')
@@ -251,9 +251,9 @@ INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.XD') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S1143768')
-);
 
-INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  UNION
+
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.PRO') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S1143939')
@@ -269,15 +269,15 @@ INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.PRO') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S1143AE1')
-);
 
-INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  UNION
+
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.RES') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S1143938')
-);
 
-INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  UNION
+
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.GRA') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S1143730')
@@ -287,18 +287,12 @@ INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.GRA') AS sparkpoint_id
   FROM get_descendant_standards_nodes('S11436AA')
-);
-
-INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
-  SELECT asn_id,
-    (SELECT id FROM sparkpoints WHERE code = 'ELA.VOC') AS sparkpoint_id
-  FROM get_descendant_standards_nodes('S11437EB')
 
   UNION
 
   SELECT asn_id,
     (SELECT id FROM sparkpoints WHERE code = 'ELA.VOC') AS sparkpoint_id
-  FROM get_descendant_standards_nodes('S1143730')
+  FROM get_descendant_standards_nodes('S11437EB')
 );
 
 -- TODO: I'm fairly sure that this is implied by serial/primary key; we should double check
