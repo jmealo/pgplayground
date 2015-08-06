@@ -96,3 +96,134 @@ CREATE INDEX standards_nodes_parent_asn_id_idx ON standards (parent_asn_id) WITH
 CREATE INDEX standards_nodes_document_asn_id ON standards (document_asn_id) WITH (fillfactor = 100);
 
 VACUUM FULL ANALYZE standards_nodes;
+
+/*SELECT *
+FROM standards_group_summary
+WHERE subject = 'English' AND
+    asn_id IN ('S11436A8', 'S11436A6', 'S11436A9', 'S11438D0', 'S1143938', 'S114372C', 'S11437EB', 'S114372B', 'S11436A5', 'S11437E9')
+AND ARRAY ['S11436A8', 'S11436A6', 'S11436A9', 'S11438D0', 'S1143938', 'S114372C', 'S11437EB', 'S114372B', 'S11436A5', 'S11437E9']::char[]
+      @> ancestors;*/
+
+CREATE OR REPLACE FUNCTION get_descendant_standard_nodes(standard_asn_id CHAR(8))
+  RETURNS SETOF standards_nodes AS $$
+  WITH RECURSIVE tree AS (
+    SELECT
+      asn_id,
+      ARRAY [$1] :: bpchar [] AS ancestors
+    FROM standards_nodes
+    WHERE parent_asn_id = $1
+
+    UNION ALL
+
+    SELECT
+      standards_nodes.asn_id,
+      tree.ancestors || standards_nodes.parent_asn_id
+    FROM standards_nodes, tree
+    WHERE standards_nodes.parent_asn_id = tree.asn_id)
+
+  SELECT standards_nodes.*
+  FROM tree
+    JOIN standards_nodes ON tree.asn_id = standards_nodes.asn_id;
+$$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION get_descendant_asn_ids(standard_asn_id CHAR(8))
+  RETURNS bpchar[] AS $$
+  WITH RECURSIVE tree AS (
+    SELECT
+      asn_id,
+      ARRAY [$1] :: bpchar [] AS ancestors
+    FROM standards_nodes
+    WHERE parent_asn_id = $1
+
+    UNION ALL
+
+    SELECT
+      standards_nodes.asn_id,
+      tree.ancestors || standards_nodes.parent_asn_id
+    FROM standards_nodes, tree
+    WHERE standards_nodes.parent_asn_id = tree.asn_id)
+
+  SELECT ARRAY(SELECT asn_id from tree);
+$$
+LANGUAGE SQL;
+
+WITH RECURSIVE tree AS (
+  SELECT node_id, ARRAY[]::integer[] AS ancestors
+  FROM nodes WHERE parent_id IS NULL
+
+  UNION ALL
+
+  SELECT nodes.node_id, tree.ancestors || nodes.parent_id
+  FROM nodes, tree
+  WHERE nodes.parent_id = tree.node_id
+) SELECT unnest(ancestors) FROM tree WHERE node_id = 15;
+
+CREATE OR REPLACE FUNCTION get_ancestor_standard_nodes(standard_asn_id CHAR(8))
+  RETURNS SETOF standards_nodes AS $$
+    WITH RECURSIVE tree AS (
+    SELECT
+      asn_id,
+      ARRAY [] :: bpchar [] AS ancestors
+    FROM standards_documents
+
+    UNION ALL
+
+    SELECT
+      standards_nodes.asn_id,
+      tree.ancestors || standards_nodes.parent_asn_id
+    FROM standards_nodes, tree
+    WHERE standards_nodes.parent_asn_id = tree.asn_id
+  )
+
+  SELECT standards_nodes.*
+    FROM tree
+    JOIN standards_nodes
+      ON tree.asn_id = standards_nodes.asn_id
+   WHERE tree.asn_id = standard_asn_id;
+$$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION get_ancestor_asn_ids(standard_asn_id CHAR(8))
+  RETURNS bpchar[] AS $$
+   WITH RECURSIVE tree AS (
+    SELECT
+      asn_id,
+      ARRAY [] :: bpchar [] AS ancestors
+    FROM standards_documents
+
+    UNION ALL
+
+    SELECT standards_nodes.asn_id,
+      tree.ancestors || standards_nodes.parent_asn_id
+    FROM standards_nodes, tree
+    WHERE standards_nodes.parent_asn_id = tree.asn_id
+  )
+
+  SELECT ARRAY(
+      SELECT asn_id
+        FROM tree
+       WHERE tree.asn_id = standard_asn_id
+  );
+$$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION get_child_asn_ids(standard_asn_id CHAR(8))
+  RETURNS bpchar[] AS $$
+
+  SELECT ARRAY(
+      SELECT asn_id
+        FROM standards_nodes
+       WHERE parent_asn_id = standard_asn_id
+  );
+$$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION get_child_standards(standard_asn_id CHAR(8))
+  RETURNS SETOF standards_nodes AS $$
+
+  SELECT *
+    FROM standards_nodes
+   WHERE parent_asn_id = standard_asn_id;
+$$
+LANGUAGE SQL;
