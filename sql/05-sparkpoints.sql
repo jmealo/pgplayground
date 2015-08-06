@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS sparkpoints
   PRIMARY KEY ("id")
 );
 
+-- TODO: DELETE / IF EXISTS wrap these
 CREATE INDEX sparkpoints_content_area_id_idx ON sparkpoints (content_area_id);
 CREATE INDEX sparkpoints_subject_idx ON sparkpoints (subject);
 CREATE INDEX sparkpoints_metadata_gin_idx  ON sparkpoints USING GIN (metadata);
@@ -41,6 +42,7 @@ CREATE TABLE IF NOT EXISTS sparkpoints_edges
   CONSTRAINT sparkpoints_edges_cycle_constraint UNIQUE (target_asn_id, source_asn_id, rel_type)
 );
 
+-- TODO: DELETE / IF EXISTS wrap these
 CREATE INDEX sparkpoints_edges_metadata_gin_idx  ON sparkpoints_edges USING GIN (metadata);
 CREATE INDEX sparkpoints_edges_target_asn_id_idx ON "sparkpoints_edges" (target_asn_id);
 CREATE INDEX sparkpoints_edges_source_asn_id_idx ON "sparkpoints_edges" (source_asn_id);
@@ -63,6 +65,7 @@ DECLARE reading_id int;
 DECLARE speaking_id int;
 DECLARE vocab_id int;
 DECLARE content_area_id int;
+DECLARE grammar_id int;
 
 BEGIN
   SELECT id FROM content_areas where abbreviation = 'ELA' INTO content_area_id;
@@ -84,26 +87,33 @@ BEGIN
     'Vocabulary', 'VOC', 'English', content_area_id, true
   ) RETURNING id INTO vocab_id;
 
+  -- INSERT INTO "sparkpoints" (student_title, abbreviation, subject, content_area_id, automatic) VALUES (
+  --  'Grammar', 'GRA', 'English', content_area_id, true
+  -- ) RETURNING id INTO grammar_id;
+
   INSERT INTO "sparkpoints" (student_title, abbreviation, parent_id, subject, content_area_id, automatic) VALUES
 
     -- Reading (RDG)
-    ('Foundation', 'FDN', reading_id, 'English', content_area_id, true),
+    ('Foundational', 'FDN', reading_id, 'English', content_area_id, true),
     ('Informational', 'INF', reading_id, 'English', content_area_id, true),
     ('Literature', 'LIT', reading_id, 'English', content_area_id, true),
+    ('Cross Discipline', 'XD', reading_id, 'English', content_area_id, true),
 
   -- Writing (WTG)
-    ('Text Types', 'FDN', writing_id, 'English', content_area_id, true),
-    ('Production and Process', 'INF', writing_id, 'English', content_area_id, true),
-    ('Research', 'LIT', writing_id, 'English', content_area_id, true),
+    ('Text Types', 'TXT', writing_id, 'English', content_area_id, true),
+    ('Production and Process', 'PRO', writing_id, 'English', content_area_id, true),
+    ('Research', 'RES', writing_id, 'English', content_area_id, true),
+    ('Cross Discipline', 'XD', writing_id, 'English', content_area_id, true),
+    ('Grammar', 'GRA', writing_id, 'English', content_area_id, true),
 
   -- Speaking and Listening (SPK)
     ('Collaboration', 'COL', speaking_id, 'English', content_area_id, true),
-    ('Presentation', 'PRS', speaking_id, 'English', content_area_id, true),
+    ('Presentation', 'PRS', speaking_id, 'English', content_area_id, true);
 
   -- Vocabulary
-    ('Context', 'CON', vocab_id, 'English', content_area_id, true),
-    ('Acquisition', 'ACQ', vocab_id, 'English', content_area_id, true),
-    ('Usage', 'USG', vocab_id, 'English', content_area_id, true);
+  --  ('Context', 'CON', vocab_id, 'English', content_area_id, true),
+  --  ('Acquisition', 'ACQ', vocab_id, 'English', content_area_id, true),
+  --  ('Usage', 'USG', vocab_id, 'English', content_area_id, true);
 
 END $$;
 
@@ -136,3 +146,164 @@ FROM (
        FROM tree
      ) AS subquery
 WHERE sparkpoints.id = subquery.id;
+
+CREATE TABLE "sparkpoint_standard_alignments" (
+  "id" serial,
+  "asn_id" char(8) NOT NULL,
+  "sparkpoint_id" integer NOT NULL,
+  PRIMARY KEY ("id"),
+  CONSTRAINT sparkpoint_standard_alignments_sparkpoint_id_asn_id_constraint UNIQUE (sparkpoint_id, asn_id)
+);
+
+-- TODO: I'm fairly sure that this is implied by serial/primary key; we should double check
+CREATE UNIQUE INDEX "ssparkpoint_standard_alignments_pk" ON "sparkpoint_standard_alignments" ("id");
+CREATE INDEX sparkpoint_standard_alignments_sparkpoint_id_idx ON sparkpoint_standard_alignments (sparkpoint_id);
+CREATE INDEX sparkpoint_standard_alignments_asn_id_idx ON sparkpoint_standard_alignments (asn_id);
+
+START TRANSACTION;
+
+CREATE TABLE IF NOT EXISTS "sparkpoint_standard_alignments" (
+  "id" serial,
+  "asn_id" char(8) NOT NULL,
+  "sparkpoint_id" integer NOT NULL,
+  PRIMARY KEY ("id"),
+  CONSTRAINT sparkpoint_standard_alignments_sparkpoint_id_asn_id_constraint UNIQUE (sparkpoint_id, asn_id)
+);
+
+DROP INDEX IF EXISTS ssparkpoint_standard_alignments_pk;
+DROP INDEX IF EXISTS sparkpoint_standard_alignments_sparkpoint_id_idx;
+DROP INDEX IF EXISTS sparkpoint_standard_alignments_asn_id_idx;
+
+-- ELA SparkPoint Mapping
+/*
+ELA.RDG.FDN  => S11436A7
+ELA.RDG.LIT  => S11436A5
+ELA.RDG.INF  => S11436A6
+ELA.RDG.XD   => S114372D, S11437A3, S11437A4
+
+ELA.WRT.XD => S11437A5, S1143768
+ELA.WRT.TT => S1143936, S11438C0
+
+ELA.WRT.PRO => S1143939,S1143937, S1143AE1
+ELA.WRT.RES => S1143938
+ELA.WRT.GRA => S1143730, S11436AA
+
+ELA.VOC => S11437EB, S1143730
+ */
+
+TRUNCATE TABLE sparkpoint_standard_alignments;
+
+INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.RDG.FDN') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S11436A7')
+);
+
+INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.RDG.LIT') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S11436A5')
+);
+
+INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.RDG.INF') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S11436A6')
+);
+
+INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.RDG.XD') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S114372D')
+
+  UNION
+
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.RDG.XD') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S11437A3')
+
+  UNION
+
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.RDG.XD') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S11437A4')
+);
+
+INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.GRA') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S1143936')
+
+  UNION
+
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.GRA') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S11438C0')
+);
+
+INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.XD') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S11437A5')
+
+  UNION
+
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.XD') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S1143768')
+);
+
+INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.PRO') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S1143939')
+
+  UNION
+
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.PRO') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S1143937')
+
+  UNION
+
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.PRO') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S1143AE1')
+);
+
+INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.RES') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S1143938')
+);
+
+INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.GRA') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S1143730')
+
+  UNION
+
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.WRT.GRA') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S11436AA')
+);
+
+INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.VOC') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S11437EB')
+
+  UNION
+
+  SELECT asn_id,
+    (SELECT id FROM sparkpoints WHERE code = 'ELA.VOC') AS sparkpoint_id
+  FROM get_descendant_standards_nodes('S1143730')
+);
+
+-- TODO: I'm fairly sure that this is implied by serial/primary key; we should double check
+CREATE UNIQUE INDEX ssparkpoint_standard_alignments_pk ON "sparkpoint_standard_alignments" ("id");
+CREATE INDEX sparkpoint_standard_alignments_sparkpoint_id_idx ON sparkpoint_standard_alignments (sparkpoint_id);
+CREATE INDEX sparkpoint_standard_alignments_asn_id_idx ON sparkpoint_standard_alignments (asn_id);
+
+COMMIT;
