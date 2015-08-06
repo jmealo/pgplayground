@@ -212,12 +212,9 @@ $$
 LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION get_root_standards_nodes(standard_asn_id CHAR(8))
-  RETURNS JSON AS $$
+  RETURNS SETOF standards_nodes AS $$
 
-select array_to_json(array_agg(row_to_json(t)))
-from (
-       SELECT * FROM standards_nodes WHERE parent_asn_id LIKE 'D%'
-     ) t
+  SELECT * FROM standards_nodes WHERE parent_asn_id LIKE 'D%'
 $$
 LANGUAGE SQL;
 
