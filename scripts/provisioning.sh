@@ -348,6 +348,12 @@ if [ ! -d "/opt/phppgadmin" ]; then
   next
 fi
 
+if [ ! -f "/usr/share/postgresql/9.4/tsearch_data/en_us.dict" ]; then
+    step "Install en_us text search dictionary"
+        try curl -sL https://gist.githubusercontent.com/jmealo/103411148300ade619b5/raw/d57b8c262ff0dba4c3acdc0f5606ba7840151c3c/install_ispell_en_us.sh | sudo bash -
+    next
+fi
+
 if ! is_installed nodejs
 then
     step "Installing node.js 0.12.X"
