@@ -33,19 +33,19 @@ CREATE INDEX sparkpoints_path_idx ON sparkpoints USING btree(path);
 CREATE TABLE IF NOT EXISTS sparkpoints_edges
 (
   id serial NOT NULL,
-  target_asn_id char(8),
-  source_asn_id char(8),
+  target_sparkpoint_id integer,
+  source_sparkpoint_id integer,
   rel_type text,
   metadata jsonb,
 
   PRIMARY KEY ("id"),
-  CONSTRAINT sparkpoints_edges_cycle_constraint UNIQUE (target_asn_id, source_asn_id, rel_type)
+  CONSTRAINT sparkpoints_edges_cycle_constraint UNIQUE (target_sparkpoint_id, source_sparkpoint_id, rel_type)
 );
 
 -- TODO: DELETE / IF EXISTS wrap these
 CREATE INDEX sparkpoints_edges_metadata_gin_idx  ON sparkpoints_edges USING GIN (metadata);
-CREATE INDEX sparkpoints_edges_target_asn_id_idx ON "sparkpoints_edges" (target_asn_id);
-CREATE INDEX sparkpoints_edges_source_asn_id_idx ON "sparkpoints_edges" (source_asn_id);
+CREATE INDEX sparkpoints_edges_target_sparkpoint_id_idx ON "sparkpoints_edges" (target_sparkpoint_id);
+CREATE INDEX sparkpoints_edges_source_sparkpoint_id_idx ON "sparkpoints_edges" (source_sparkpoint_id);
 CREATE INDEX sparkpoints_edges_rel_type_idx      ON "sparkpoints_edges" (rel_type);
 
 -- TODO: Temporary fix for null subjects
@@ -156,7 +156,7 @@ CREATE TABLE "sparkpoint_standard_alignments" (
 );
 
 -- TODO: I'm fairly sure that this is implied by serial/primary key; we should double check
-CREATE UNIQUE INDEX "ssparkpoint_standard_alignments_pk" ON "sparkpoint_standard_alignments" ("id");
+CREATE UNIQUE INDEX sparkpoint_standard_alignments_pk ON "sparkpoint_standard_alignments" ("id");
 CREATE INDEX sparkpoint_standard_alignments_sparkpoint_id_idx ON sparkpoint_standard_alignments (sparkpoint_id);
 CREATE INDEX sparkpoint_standard_alignments_asn_id_idx ON sparkpoint_standard_alignments (asn_id);
 
@@ -295,9 +295,58 @@ INSERT into sparkpoint_standard_alignments (asn_id, sparkpoint_id) (
   FROM get_descendant_standards_nodes('S11437EB')
 );
 
+DROP INDEX IF EXISTS sparkpoint_standard_alignments_pk;
+DROP INDEX IF EXISTS sparkpoint_standard_alignments_sparkpoint_id_idx;
+DROP INDEX IF EXISTS sparkpoint_standard_alignments_asn_id_idx;
+
 -- TODO: I'm fairly sure that this is implied by serial/primary key; we should double check
-CREATE UNIQUE INDEX ssparkpoint_standard_alignments_pk ON "sparkpoint_standard_alignments" ("id");
+CREATE UNIQUE INDEX sparkpoint_standard_alignments_pk ON sparkpoint_standard_alignments ("id");
 CREATE INDEX sparkpoint_standard_alignments_sparkpoint_id_idx ON sparkpoint_standard_alignments (sparkpoint_id);
 CREATE INDEX sparkpoint_standard_alignments_asn_id_idx ON sparkpoint_standard_alignments (asn_id);
+
+INSERT INTO sparkpoints (
+  code,
+  abbreviation,
+  student_title,
+  teacher_title,
+  subject,
+  grade_level,
+  automatic,
+  content_area_id,
+  metadata
+) (
+  SELECT
+    code,
+    substr(code, 19)             AS abbreviation,
+    title                        AS student_title,
+    title                        AS teacher_title,
+    subject,
+    grades                       AS grade_level,
+    TRUE                         AS automatic,
+    (SELECT id
+     FROM content_areas
+     WHERE abbreviation = 'MAT') AS content_area_id,
+    json_build_object('asn_id', asn_id)::JSONB AS metadata
+  FROM standards_nodes sn
+  WHERE sn.asn_id IN (
+    SELECT target_asn_id AS asn_id
+    FROM standards_edges
+    UNION DISTINCT
+    SELECT source_asn_id AS asn_id
+    FROM standards_edges
+  )
+);
+
+INSERT INTO sparkpoints_edges (
+  target_sparkpoint_id,
+  source_sparkpoint_id,
+  rel_type,
+  metadata
+) (SELECT
+  (SELECT id FROM sparkpoints WHERE metadata->>'asn_id'::char(8) = target_asn_id) AS target_sparkpoint_id,
+  (SELECT id FROM sparkpoints WHERE metadata->>'asn_id'::char(8) = source_asn_id) AS source_sparkpoint_id,
+  rel_type,
+  json_build_object('automatic', true)::JSONB as metadata
+FROM standards_edges);
 
 COMMIT;
