@@ -212,9 +212,12 @@ $$
 LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION get_root_standards_nodes(standard_asn_id CHAR(8))
-  RETURNS SETOF standards_nodes AS $$
+  RETURNS JSON AS $$
 
-  SELECT * FROM standards_nodes WHERE parent_asn_id LIKE 'D%';
+select array_to_json(array_agg(row_to_json(t)))
+from (
+       SELECT * FROM standards_nodes WHERE parent_asn_id LIKE 'D%'
+     ) t
 $$
 LANGUAGE SQL;
 
@@ -266,7 +269,7 @@ CREATE OR REPLACE FUNCTION get_descendant_standards_nodes(standard_asn_id CHAR(8
     FROM standards_nodes, tree
     WHERE standards_nodes.parent_asn_id = tree.asn_id)
 
-  SELECT asn_id
+  SELECT standards_nodes.*
     FROM tree
     JOIN standards_nodes ON tree.asn_id = standards_nodes.asn_id
    WHERE standard_asn_id = ANY(tree.ancestors)
@@ -293,11 +296,11 @@ CREATE OR REPLACE FUNCTION get_descendant_asn_ids(standard_asn_id CHAR(8), depth
     WHERE standards_nodes.parent_asn_id = tree.asn_id)
 
   SELECT ARRAY(
-      SELECT asn_id
+      SELECT tree.asn_id
         FROM tree
        WHERE standard_asn_id = ANY(tree.ancestors)
          AND cardinality(tree.ancestors) <= depth
-  );
+  )::bpchar[];
 $$
 LANGUAGE SQL;
 
