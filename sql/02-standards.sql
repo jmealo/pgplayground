@@ -208,22 +208,51 @@ CREATE OR REPLACE FUNCTION get_ancestor_asn_ids(standard_asn_id CHAR(8))
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION get_child_asn_ids(standard_asn_id CHAR(8))
+CREATE OR REPLACE FUNCTION get_root_asn_ids(standard_asn_id CHAR(8))
   RETURNS bpchar[] AS $$
 
   SELECT ARRAY(
       SELECT asn_id
         FROM standards_nodes
-       WHERE parent_asn_id = standard_asn_id
+       WHERE parent_asn_id LIKE 'D%'
   );
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION get_child_standards(standard_asn_id CHAR(8))
+CREATE OR REPLACE FUNCTION get_root_standards(standard_asn_id CHAR(8))
+  RETURNS SETOF standards_nodes AS $$
+
+  SELECT * FROM standards_nodes WHERE parent_asn_id LIKE 'D%';
+$$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION get_leaf_asn_ids(standard_asn_id CHAR(8))
+  RETURNS bpchar[] AS $$
+
+  SELECT ARRAY(
+      SELECT asn_id
+        FROM standards_nodes
+       WHERE asn_id NOT IN (
+         SELECT asn_id
+           FROM standards_nodes
+          WHERE parent_asn_id LIKE 'D%'
+       )
+  );
+$$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION get_leaf_standards(standard_asn_id CHAR(8))
   RETURNS SETOF standards_nodes AS $$
 
   SELECT *
     FROM standards_nodes
-   WHERE parent_asn_id = standard_asn_id;
+   WHERE asn_id NOT IN (
+      SELECT asn_id
+        FROM standards_nodes
+       WHERE parent_asn_id LIKE 'D%'
+   );
 $$
 LANGUAGE SQL;
+
+
+
