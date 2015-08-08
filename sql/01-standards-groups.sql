@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS "standards_groups" (
     "jurisdiction" standards_jurisdiction,
     "grades" standards_grade[],
     "parent_asn_id" char(8),
+    "parent_sort_order" integer,
     "document_asn_id" char(8) NOT NULL,
     "children" char(8)[],
     PRIMARY KEY ("id"),
