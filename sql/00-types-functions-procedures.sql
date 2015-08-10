@@ -152,8 +152,9 @@ CREATE TABLE IF NOT EXISTS "public"."standards_documents" (
   "jurisdiction" standards_jurisdiction,
   "grades" standards_grade[],
   "children" jsonb,
-  "standards_count" int,
-  "groups_count" int,
+  "standards_count" integer,
+  "groups_count" integer,
+  "content_area_id" integer,
   PRIMARY KEY ("id")
 );
 
@@ -172,9 +173,10 @@ DROP INDEX IF EXISTS standards_documents_grades_idx;
 DROP INDEX IF EXISTS standards_documents_subject_idx;
 DROP INDEX IF EXISTS standards_documents_jurisdiction_idx;
 
-CREATE UNIQUE INDEX standards_documents_asn_id_idx ON "standards_documents" (asn_id) WITH (fillfactor = 100);
-CREATE INDEX standards_documents_grades_idx ON standards_documents USING btree(grades) WITH (fillfactor = 100);
-CREATE INDEX standards_documents_subject_idx ON standards_documents (subject)  WITH (fillfactor = 100);
-CREATE INDEX standards_documents_jurisdiction_idx ON standards_documents (jurisdiction)  WITH (fillfactor = 100);
+CREATE UNIQUE INDEX standards_documents_asn_id_idx ON "standards_documents" (asn_id);
+CREATE INDEX standards_documents_grades_idx ON standards_documents USING btree(grades);
+CREATE INDEX standards_documents_subject_idx ON standards_documents (subject);
+CREATE INDEX standards_documents_jurisdiction_idx ON standards_documents (jurisdiction);
+CREATE INDEX standards_documents_content_area_id_idx ON standards_documents (content_area_id);
 
 END$$;

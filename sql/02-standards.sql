@@ -65,6 +65,8 @@ DROP MATERIALIZED VIEW IF EXISTS public.standards_nodes;
 CREATE MATERIALIZED VIEW public.standards_nodes AS
   SELECT
     standards.asn_id,
+    standards.mb_long,
+    standards.mb_short,
     standards.code,
     standards.title,
     standards.subject,
@@ -79,6 +81,8 @@ CREATE MATERIALIZED VIEW public.standards_nodes AS
 
   SELECT
     standards_groups.asn_id,
+    null as mb_long,
+
     standards_groups.code,
     standards_groups.title,
     standards_groups.subject,
@@ -372,20 +376,8 @@ CREATE OR REPLACE FUNCTION sub_content_areas(standard_asn_id CHAR(8))
 
   SELECT array_to_json(array_agg(row_to_json(t)))
   FROM (
-         SELECT * FROM sparkpoints WHERE metadata->asn_in::CHAR(8) IN (SELECT asn_id FROM get_descendant_standards_nodes(standard_asn_id, 1))
+         SELECT * FROM sparkpoints WHERE metadata->>'asn_id'::CHAR(8) IN (SELECT asn_id FROM get_descendant_standards_nodes(standard_asn_id, 1))
        ) t;
-$$
-LANGUAGE SQL;
-
-CREATE OR REPLACE FUNCTION create_sub_content_areas(content_area_id INTEGER)
-  RETURNS JSON AS $$
-
-
-  SELECT get_descendant_standard_nodes(sd.asn_id, 1)
-    FROM content_areas ca
-    JOIN standards_documents sd
-      ON ca.id = content_area_id
-
 $$
 LANGUAGE SQL;
 

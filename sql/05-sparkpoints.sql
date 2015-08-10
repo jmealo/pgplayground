@@ -170,7 +170,7 @@ CREATE TABLE IF NOT EXISTS "sparkpoint_standard_alignments" (
   CONSTRAINT sparkpoint_standard_alignments_sparkpoint_id_asn_id_constraint UNIQUE (sparkpoint_id, asn_id)
 );
 
-DROP INDEX IF EXISTS ssparkpoint_standard_alignments_pk;
+DROP INDEX IF EXISTS sparkpoint_standard_alignments_pk;
 DROP INDEX IF EXISTS sparkpoint_standard_alignments_sparkpoint_id_idx;
 DROP INDEX IF EXISTS sparkpoint_standard_alignments_asn_id_idx;
 
@@ -348,5 +348,39 @@ INSERT INTO sparkpoints_edges (
   rel_type,
   json_build_object('automatic', true)::JSONB as metadata
 FROM standards_edges);
+
+INSERT INTO sparkpoints (
+  code,
+  abbreviation,
+  student_title,
+  teacher_title,
+  subject,
+  grade_level,
+  automatic,
+  content_area_id,
+  metadata
+) (
+  SELECT
+    code,
+    substr(code, 19)             AS abbreviation,
+    title                        AS student_title,
+    title                        AS teacher_title,
+    subject,
+    grades                       AS grade_level,
+    TRUE                         AS automatic,
+    (SELECT id
+     FROM content_areas
+     WHERE abbreviation = 'MAT') AS content_area_id,
+    json_build_object('asn_id', asn_id)::JSONB AS metadata
+  FROM standards_nodes sn
+ WHERE sn.asn_id NOT IN (
+    SELECT target_asn_id AS asn_id
+    FROM standards_edges
+    UNION DISTINCT
+    SELECT source_asn_id AS asn_id
+    FROM standards_edges
+  )
+   AND subject = 'Math'
+);
 
 COMMIT;

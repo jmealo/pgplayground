@@ -62,6 +62,7 @@ BEGIN
     ('Biology', 'BIO', science_id, 'Science'),
     ('Physics', 'PHY', science_id, 'Science'),
     ('Chemistry', 'CHM', science_id, 'Science'),
+    ('Earth', 'EAR', science_id, 'Science'),
     ('Foundation', 'FDN', science_id, 'Science'),
 
     -- English
@@ -84,11 +85,10 @@ BEGIN
     ('World History', 'HIS', social_studies_id, 'Social Studies'),
 
     -- Art
-    ('Photography', 'PHO', art_id, 'The Arts'),
-    ('Pottery', 'POT', art_id, 'The Arts'),
-    ('Art History', 'HIS', art_id, 'The Arts'),
-    ('Fine Art', 'FNE', art_id, 'The Arts'),
-    ('Color and 2D', 'C2D', art_id, 'The Arts'),
+    ('Dance',      'DNC', art_id, 'The Arts'),
+    ('Music',      'MUS', art_id, 'The Arts'),
+    ('Theatre',    'THE', art_id, 'The Arts'),
+    ('Visual Art', 'VIS', art_id, 'The Arts'),
 
     -- Technology
     ('Programming', 'PRG', tech_id, 'Technology'),
@@ -138,4 +138,61 @@ CREATE INDEX content_areas_path_gist_idx ON content_areas USING gist(path);
 CREATE INDEX content_areas_path_idx ON content_areas USING btree(path);
 CREATE INDEX content_areas_subject_idx ON content_areas (subject);
 
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'ELA')     WHERE asn_id = 'D10003FC';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'MAT')     WHERE asn_id = 'D10003FB';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'ART')     WHERE asn_id = 'D2594344';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'PE')      WHERE asn_id = 'D2594343';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'SS')      WHERE asn_id = 'D2594345';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'TCH')     WHERE asn_id = 'D2602363';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'WL')      WHERE asn_id = 'D2603532';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'ART')     WHERE asn_id = 'D2363748';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'SCI.BIO') WHERE asn_id = 'D1000361';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'SCI.CHM') WHERE asn_id = 'D1000362';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'SCI.EAR') WHERE asn_id = 'D1000363';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'HLT')     WHERE asn_id = 'D1000394';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'SCI.FDN') WHERE asn_id = 'D1000280';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'PE')      WHERE asn_id = 'D10003D5';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'SCI.BIO') WHERE asn_id = 'D1000332';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'SS')      WHERE asn_id = 'D10002CE';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'SS')      WHERE asn_id = 'D2596842';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'TCH')     WHERE asn_id = 'D2587643';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'WL')      WHERE asn_id = 'D1000395';
+UPDATE standards_documents SET content_area_id = (SELECT id from content_areas WHERE code = 'SCI')     WHERE asn_id = 'D2454348';
+
 COMMIT;
+
+WITH sub_ca_asn_ids AS
+(
+  SELECT ca.id,
+         get_descendant_standards_nodes(sd.asn_id, 1) AS asn_ids
+    FROM content_areas ca
+    JOIN standards_documents sd
+      ON sd.content_area_id = ca.id
+),
+(
+    SELECT *
+      FROM sub_ca_asn_ids
+      JOIN standards_nodes sn
+        ON sn
+) AS sub_ca_standards
+
+SELECT * from sub_content_areas;
+
+/* SELECT ca.*,
+       ARRAY(SELECT id FROM sparkpoints JOIN get_descendant_standards_nodes(sd.asn_id, 1) dsn ON metadata->asn_id = dsn.asn_id) AS subcontent_areas
+FROM content_areas ca JOIN standards_documents sd ON sd.content_area_id = ca.id; */
+
+/*
+SELECT  *,
+  (SELECT id
+     FROM sparkpoints
+    WHERE metadata->>asn_id IN get_descendant_asn_ids(sd.asn_id, 1)) AS subcontent_sparkpoint_is
+  FROM content_areas ca
+  JOIN standards_documents sd
+    ON ca.id = sd.content_area_id;
+
+INSERT into foo_bar (foo_id, bar_id) (
+  SELECT foo.id, bar.id FROM foo CROSS JOIN bar
+  WHERE type = 'name' AND name IN ('selena', 'funny', 'chip')
+);
+*/
