@@ -82,7 +82,7 @@ CREATE MATERIALIZED VIEW public.standards_nodes AS
   SELECT
     standards_groups.asn_id,
     null as mb_long,
-
+    null as mb_short,
     standards_groups.code,
     standards_groups.title,
     standards_groups.subject,
